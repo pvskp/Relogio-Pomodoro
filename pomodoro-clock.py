@@ -5,16 +5,22 @@ from tkinter import ttk
 WINDOW_WIDTH = 300
 WINDOW_HEIGHT = 300 
 
+TIME_WINDOW_WIDTH = 200
+TIME_WINDOW_HEIGHT = 200
+
 def map_buttons(root):
     button = ttk.Button(root, text='set time')
     button.place(y=50, relx=.5, rely=.5, anchor=CENTER)
     button.bind('<Button-1>', set_time_window)
-    
-    pass
 
 def set_time_window(event):
     time_window = Toplevel()
     time_window.title('Time')
+    time_window.minsize(width=TIME_WINDOW_WIDTH, height=TIME_WINDOW_HEIGHT)
+    time_window.maxsize(width=TIME_WINDOW_WIDTH, height=TIME_WINDOW_HEIGHT)
+
+    work_time = ttk.Entry(time_window)
+    work_time.grid()
 
 def create_buttons_database():
     buttons = dict()
@@ -28,7 +34,7 @@ def create_main_window():
     root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
     root.maxsize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    root_entry = ttk.Entry(root, textvariable=IntVar())
+    # root_entry = ttk.Entry(root, textvariable=IntVar())
 
     # root_entry.place(y=40, relx=.5, rely=.5, anchor=CENTER)
 
@@ -38,8 +44,8 @@ def create_main_window():
 
 def main():
     root = create_main_window()
-    buttons = create_buttons_database()
-    map_buttons(root, buttons)
+    # buttons = create_buttons_database()
+    map_buttons(root)
     root.mainloop()
 
 if __name__ == '__main__':

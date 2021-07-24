@@ -73,7 +73,7 @@ def time_window_buttons(root, display, time_window, work_time_entry, rest_time_e
 
 def root_buttons(root, display, msg):
     set_time_button = ttk.Button(root, text='Set time')
-    set_time_button.place(y=1000, relx=.5, rely=.5, anchor=CENTER)
+    set_time_button.place(y=50, relx=.5, rely=.5, anchor=CENTER)
     set_time_button.bind('<Button-1>', lambda event, root=root, display=display :set_time_window(event, root, display))
 
     go_button = ttk.Button(root, text='Go!', width=3)

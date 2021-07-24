@@ -16,11 +16,24 @@ class Pomodoro:
         self.root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.root.maxsize(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.root.title('Pomodoro')
+        
+        ## display
+
         self.display = ttk.Label(self.root, text='00:00', font='roboto 40 bold')
         self.display.place(y=-40, relx=.5, rely=.5, anchor=CENTER)
+
+        ## message
+
+        self.message = ttk.Label(self.root)
+        self.message.place(y=-100, relx=.5, rely=.5, anchor=CENTER)
+
+        ## set time button
+
         self.set_time_button = ttk.Button(root, text='Set time')
         self.set_time_button.place(y=50, relx=.5, rely=.5, anchor=CENTER)
         self.set_time_button.bind('<Button-1>', self.set_time_window)
+
+        ## Go! button
 
         self.go_button = ttk.Button(self.root, text='Go!', width=3)
         self.go_button.place(y=90, relx=.5, rely=.5, anchor=CENTER)
@@ -49,19 +62,31 @@ class Pomodoro:
     def save_time(self, event):
         work_time = self.work_time_entry.get()
         rest_time = self.rest_time_entry.get()
-        self.times = [int(work_time)*60, int(rest_time)*60] # save the time in seconds
-        self.times_backup = (int(work_time)*60, int(rest_time)*60) # store the intial values to restart the time
-        self.work_time = self.seconds_to_string(self.times[0])
-        self.display['text'] = self.work_time
-        self.time_window.destroy()
-        self.root.update()
+        
+        ### ERROR MESSAGES
+
+        if (work_time == '') or (rest_time == ''):
+            self.error_label = ttk.Label(self.time_window, text= 'Fill all fields!').place(x=160, y=120)
+        elif (not work_time.isdigit()) or (not rest_time.isdigit()):
+            self.error_label = ttk.Label(self.time_window, text= 'Only integers!').place(x=160, y=120)
+
+        ### in case everything is ok
+           
+        else:
+            self.times = [int(work_time)*60, int(rest_time)*60] # save the time in seconds
+            self.times_backup = (int(work_time)*60, int(rest_time)*60) # store the intial values to restart the time
+            self.work_time = self.seconds_to_string(self.times[0])
+            self.display.config(text=self.work_time)
+            self.time_window.destroy()
+            self.root.update()
 
     def run_work_time(self, event):
         if self.times[0] >= 0:
+            self.message.config(text='Time to work!')
             work_time = self.times[0]
             self.times[0] -= 1
             work_time_string = self.seconds_to_string(work_time)
-            self.display['text'] = work_time_string
+            self.display.config(text=work_time_string)
             self.display.after(1000, lambda event=event: self.run_work_time(event))
             self.go_button_event = event
 
@@ -72,10 +97,11 @@ class Pomodoro:
 
     def run_rest_time(self):
         if self.times[1] >= 0:
+            self.message.config(text='Time to rest. Take a break!')
             rest_time = self.times[1]
             self.times[1] -= 1
             rest_time_string = self.seconds_to_string(rest_time)
-            self.display['text'] = rest_time_string
+            self.display.config(text=rest_time_string)
             self.display.after(1000, self.run_rest_time)
         else:
             self.times[0] = self.times_backup[0]

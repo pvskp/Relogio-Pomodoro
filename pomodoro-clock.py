@@ -51,8 +51,7 @@ class Pomodoro:
         rest_time = self.rest_time_entry.get()
         self.times = [int(work_time)*60, int(rest_time)*60] # save the time in seconds
         self.times_backup = (int(work_time)*60, int(rest_time)*60) # store the intial values to restart the time
-        seconds = int(work_time)*60
-        self.work_time = self.seconds_to_string(seconds)
+        self.work_time = self.seconds_to_string(self.times[0])
         self.display['text'] = self.work_time
         self.time_window.destroy()
         self.root.update()
@@ -63,12 +62,12 @@ class Pomodoro:
             self.times[0] -= 1
             work_time_string = self.seconds_to_string(work_time)
             self.display['text'] = work_time_string
-            self.display.after(50, lambda event=event: self.run_work_time(event))
+            self.display.after(1000, lambda event=event: self.run_work_time(event))
             self.go_button_event = event
 
         else:
             self.times[1] = self.times_backup[1]
-            time.sleep(1)
+            time.sleep(1) # time to play a sound
             self.run_rest_time()
 
     def run_rest_time(self):
@@ -77,10 +76,10 @@ class Pomodoro:
             self.times[1] -= 1
             rest_time_string = self.seconds_to_string(rest_time)
             self.display['text'] = rest_time_string
-            self.display.after(50, self.run_rest_time)
+            self.display.after(1000, self.run_rest_time)
         else:
             self.times[0] = self.times_backup[0]
-            time.sleep(1)
+            time.sleep(1) # time to play a sound
             self.run_work_time(self.go_button_event)
 
     def seconds_to_string(self, seconds):

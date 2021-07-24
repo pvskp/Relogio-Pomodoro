@@ -9,115 +9,91 @@ WINDOW_HEIGHT = 300
 TIME_WINDOW_WIDTH = 400 
 TIME_WINDOW_HEIGHT = 200
 
-time_display = ['00:00', '00:00']
+class Pomodoro:
+    def __init__(self, root) -> None:
+        self.root = root
+        self.times = []
+        self.root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.root.maxsize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.root.title('Pomodoro')
+        self.display = ttk.Label(self.root, text='00:00', font='roboto 40 bold')
+        self.display.place(y=-40, relx=.5, rely=.5, anchor=CENTER)
+        self.set_time_button = ttk.Button(root, text='Set time')
+        self.set_time_button.place(y=50, relx=.5, rely=.5, anchor=CENTER)
+        self.set_time_button.bind('<Button-1>', self.set_time_window)
 
-def seconds_to_string(seconds):
-    minute, second = divmod(seconds, 60)
-    time_string = f'{minute:02d}:{second:02d}'
+        self.go_button = ttk.Button(self.root, text='Go!', width=3)
+        self.go_button.place(y=90, relx=.5, rely=.5, anchor=CENTER)
+        self.go_button.bind('<Button-1>', self.run_work_time)
 
-    return time_string
+    def set_time_window(self, event):
+        self.time_window = Toplevel()
+        self.time_window.title('Time')
+        self.time_window.minsize(width=TIME_WINDOW_WIDTH, height=TIME_WINDOW_HEIGHT)
+        self.time_window.maxsize(width=TIME_WINDOW_WIDTH, height=TIME_WINDOW_HEIGHT)
 
-def update_time(event, root, display, msg):
-    global time_display
-    
-    actual_time = display['text']
+        self.work_time_label = ttk.Label(self.time_window, text='Minutes you want to spend working:')
+        self.work_time_label.place(x=20, y=30)
+        self.work_time_entry = ttk.Entry(self.time_window, width=5)
+        self.work_time_entry.place(x=265, y=30)
 
-    if actual_time != '00:00':
-        msg['text'] = 'Time to work!'
-        total_seconds = datetime.strptime(actual_time, '%M:%S')
-        actual_seconds = total_seconds.minute*60 + total_seconds.second - 1
-        actual_time_string = seconds_to_string(actual_seconds)
-        if actual_time_string == '':
-            actual_time_string = '00:00'
-        display['text'] = actual_time_string
-        display.after(1000, lambda event=event, root=root, display=display, msg=msg: update_time(event, root, display, msg))
-    
-    else:
-        time.sleep(1)
-        msg['text'] = 'Time to rest. Take a break'
-        display['text'] = time_display[1]
-        total_seconds = datetime.strptime(time_display[1], '%M:%S')
-        acttual_seconds = total_seconds.minute*60 + total_seconds.second -1
-        display.after(1000, lambda event=event, root=root, display=display, msg=msg: update_time(event, root, display, msg))
+        self.rest_time_label = ttk.Label(self.time_window, text='Minutes you want to spend resting: ')
+        self.rest_time_label.place(x=20, y=90)
+        self.rest_time_entry = ttk.Entry(self.time_window, width=5)
+        self.rest_time_entry.place(x=265, y=90)
 
-def save_time(event, root, display, time_window, work_time, rest_time):
-    global time_display
+        self.apply_button = ttk.Button(self.time_window, text='Apply', width=5)
+        self.apply_button.place(x=175,y=150)
+        self.apply_button.bind('<Button-1>', self.save_time)
 
-    wks = work_time.get()
-    rst = rest_time.get()
+    def save_time(self, event):
+        work_time = self.work_time_entry.get()
+        rest_time = self.rest_time_entry.get()
+        self.times = [int(work_time)*60, int(rest_time)*60] # save the time in seconds
+        self.times_backup = (int(work_time)*60, int(rest_time)*60) # store the intial values to restart the time
+        seconds = int(work_time)*60
+        self.work_time = self.seconds_to_string(seconds)
+        self.display['text'] = self.work_time
+        self.time_window.destroy()
+        self.root.update()
 
-    if (wks == '') or (rst == ''):
-        error_label = ttk.Label(time_window, text= 'Fill all fields!').place(x=160, y=120)
-    elif (not wks.isdigit()) or (not rst.isdigit()):
-        error_label = ttk.Label(time_window, text= 'Only integers!').place(x=160, y=120)
-    else:
-        wks = int(wks)
-        rst = int(rst)
-        
-        time_window.destroy()
-        time_window.update()
+    def run_work_time(self, event):
+        if self.times[0] >= 0:
+            work_time = self.times[0]
+            self.times[0] -= 1
+            work_time_string = self.seconds_to_string(work_time)
+            self.display['text'] = work_time_string
+            self.display.after(50, lambda event=event: self.run_work_time(event))
+            self.go_button_event = event
 
-        seconds_to_work = wks*60
-        seconds_to_rest = rst*60
+        else:
+            self.times[1] = self.times_backup[1]
+            time.sleep(1)
+            self.run_rest_time()
 
-        time_display[1] = seconds_to_string(seconds_to_rest)
-        
-        time_display[0] = seconds_to_string(seconds_to_work)
+    def run_rest_time(self):
+        if self.times[1] >= 0:
+            rest_time = self.times[1]
+            self.times[1] -= 1
+            rest_time_string = self.seconds_to_string(rest_time)
+            self.display['text'] = rest_time_string
+            self.display.after(50, self.run_rest_time)
+        else:
+            self.times[0] = self.times_backup[0]
+            time.sleep(1)
+            self.run_work_time(self.go_button_event)
 
-        display['text'] = time_display[0]
+    def seconds_to_string(self, seconds):
+        minute, second = divmod(seconds, 60)
+        time_string = f'{minute:02d}:{second:02d}'
 
-def time_window_buttons(root, display, time_window, work_time_entry, rest_time_entry):
-    apply_button = ttk.Button(time_window, text='Apply', width=5)
-    apply_button.place(x=175,y=150)
-    apply_button.bind('<Button-1>', lambda event,root=root, display=display, time_window=time_window, wkt = work_time_entry, rst = rest_time_entry :save_time(event, root, display, time_window, wkt, rst))
+        return time_string
 
-def root_buttons(root, display, msg):
-    set_time_button = ttk.Button(root, text='Set time')
-    set_time_button.place(y=50, relx=.5, rely=.5, anchor=CENTER)
-    set_time_button.bind('<Button-1>', lambda event, root=root, display=display :set_time_window(event, root, display))
-
-    go_button = ttk.Button(root, text='Go!', width=3)
-    go_button.place(y=90, relx=.5, rely=.5, anchor=CENTER)
-    go_button.bind('<Button-1>', lambda event, root=root, display=display, msg=msg: update_time(event, root, display, msg))
-
-def set_time_window(event, root, display):
-    time_window = Toplevel()
-    time_window.title('Time')
-    time_window.minsize(width=TIME_WINDOW_WIDTH, height=TIME_WINDOW_HEIGHT)
-    time_window.maxsize(width=TIME_WINDOW_WIDTH, height=TIME_WINDOW_HEIGHT)
-
-    work_time_label = ttk.Label(time_window, text='Minutes you want to spend working:')
-    work_time_label.place(x=20, y=30)
-    work_time_entry = ttk.Entry(time_window, width=5)
-    work_time_entry.place(x=265, y=30)
-
-    rest_time_label = ttk.Label(time_window, text='Minutes you want to spend resting: ')
-    rest_time_label.place(x=20, y=90)
-    rest_time_entry = ttk.Entry(time_window, width=5)
-    rest_time_entry.place(x=265, y=90)
-
-    time_window_buttons(root, display, time_window, work_time_entry, rest_time_entry)
-
-def create_main_window():
+def main():
     root = Tk()
     style = ttk.Style(root)
     style.theme_use('clam')
-    root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
-    root.maxsize(WINDOW_WIDTH, WINDOW_HEIGHT)
-    root.title('Pomodoro')
-
-    display = ttk.Label(root, text=time_display[0], font='roboto 40 bold')
-
-    display.place(y=-40, relx=.5, rely=.5, anchor=CENTER)
-
-    msg = ttk.Label(root)
-    msg.place(y=-100, relx=.5, rely=.5, anchor=CENTER)
-
-    return root, display, msg
-
-def main():
-    root, display, msg = create_main_window()
-    root_buttons(root, display, msg)
+    pomodoro_clock = Pomodoro(root)
     root.mainloop()
 
 if __name__ == '__main__':

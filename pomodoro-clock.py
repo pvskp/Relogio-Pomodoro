@@ -1,4 +1,4 @@
-from datetime import *
+import threading
 import time
 from tkinter import *
 from tkinter import ttk
@@ -16,7 +16,10 @@ class Pomodoro:
         self.root.minsize(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.root.maxsize(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.root.title('Pomodoro')
-        
+
+        self.is_running = False
+        self.pause_signal = False
+
         ## display
 
         self.display = ttk.Label(self.root, text='00:00', font='roboto 40 bold')
@@ -35,9 +38,14 @@ class Pomodoro:
 
         ## Go! button
 
-        self.go_button = ttk.Button(self.root, text='Go!', width=3)
+        self.go_button = ttk.Button(self.root, width=3)
         self.go_button.place(y=90, relx=.5, rely=.5, anchor=CENTER)
         self.go_button.bind('<Button-1>', self.run_work_time)
+
+        # Threding 
+
+        self.check = threading.Thread(target=self.running_check)
+        self.check.start()
 
     def set_time_window(self, event):
         self.time_window = Toplevel()
@@ -82,13 +90,18 @@ class Pomodoro:
 
     def run_work_time(self, event):
         if self.times[0] >= 0:
+            # self.go_button.config(text='Pause')
+            self.is_running = True
             self.message.config(text='Time to work!')
             work_time = self.times[0]
             self.times[0] -= 1
             work_time_string = self.seconds_to_string(work_time)
             self.display.config(text=work_time_string)
-            self.display.after(1000, lambda event=event: self.run_work_time(event))
-            self.go_button_event = event
+            if not self.pause_signal:
+                self.display.after(1000, lambda event=event: self.run_work_time(event))
+                self.go_button_event = event
+            else:
+                self.is_running = False
 
         else:
             self.times[1] = self.times_backup[1]
@@ -97,6 +110,7 @@ class Pomodoro:
 
     def run_rest_time(self):
         if self.times[1] >= 0:
+            self.is_running = True
             self.message.config(text='Time to rest. Take a break!')
             rest_time = self.times[1]
             self.times[1] -= 1
@@ -108,11 +122,25 @@ class Pomodoro:
             time.sleep(1) # time to play a sound
             self.run_work_time(self.go_button_event)
 
+    def pause_time(self, event):
+        self.pause_signal = True
+
     def seconds_to_string(self, seconds):
         minute, second = divmod(seconds, 60)
         time_string = f'{minute:02d}:{second:02d}'
 
         return time_string
+
+    def running_check(self):
+        while True:
+            if self.is_running:
+                self.go_button.config(text='Pause', width=5)
+                self.go_button.bind('<Button-1>', self.pause_time)
+            else:
+                self.go_button.config(text='Go!', width=3)
+                self.go_button.bind('<Button-1>', self.run_work_time)
+                self.pause_signal = False
+            time.sleep(0.1)
 
 def main():
     root = Tk()

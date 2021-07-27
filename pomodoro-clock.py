@@ -90,7 +90,6 @@ class Pomodoro:
 
     def run_work_time(self, event):
         if self.times[0] >= 0:
-            # self.go_button.config(text='Pause')
             self.is_running = True
             self.message.config(text='Time to work!')
             work_time = self.times[0]
@@ -102,7 +101,6 @@ class Pomodoro:
                 self.go_button_event = event
             else:
                 self.is_running = False
-
         else:
             self.times[1] = self.times_backup[1]
             time.sleep(1) # time to play a sound
